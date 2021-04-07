@@ -13,26 +13,37 @@
  */
 
 SoftwareSerial swSer;
+SoftwareSerial swSer1;
+long last_flush;
 
 void setup() {
   // disable WiFi
   WiFi.mode(WIFI_OFF);
 
-  // INIT serial communication
-  Serial.begin(115200);
-  Serial.println('\n');
+  pinMode(1, OUTPUT); // soft serial output
+  pinMode(13, INPUT); // soft serial input
+  swSer.begin(31250, SWSERIAL_8N1, 13, -1);
+  swSer1.begin(115200, SWSERIAL_8N1, -1, 1);
 
-  pinMode(13, INPUT); // soft serial
-  swSer.begin(31250, SWSERIAL_8N1, 13);
+  pinMode(2, OUTPUT); // LRCK
+  pinMode(3, OUTPUT); // DIN
+  pinMode(15,OUTPUT); // BCK
+
+  last_flush = millis();
 }
 
 void loop() {
   while (swSer.available() > 0) {
+    if (millis() - last_flush > 100) {
+      swSer1.print('\n');
+      last_flush = millis();
+    }
     char c = swSer.read();
     if (c < 0xf) {
-      Serial.print('0');
+      swSer1.print('0');
     }
-    Serial.print(swSer.read(), HEX);
+    swSer1.print(c, HEX);
     yield();
   }
+
 }
